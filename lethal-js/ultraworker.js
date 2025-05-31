@@ -9,17 +9,32 @@
 importScripts('https://cdn.jsdelivr.net/npm/@titaniumnetwork-dev/ultraviolet/dist/uv.bundle.js');
 importScripts('uv.config.js');
 importScripts(__uv$config.sw);
+importScripts("/scram/scramjet.shared.js", "/scram/scramjet.worker.js");
 
 const uv = new UVServiceWorker();
+const scramjet = new ScramjetServiceWorker();
+
+let playgroundData;
+
+self.addEventListener('message', ({ data }) => {
+  if (data.type === 'playgroundData') {
+    playgroundData = data;
+  }
+});
 
 async function handleRequest(event) {
-    if (uv.route(event)) {
-        return await uv.fetch(event);
-    }
-    
-    return await fetch(event.request)
+
+  await scramjet.loadConfig();
+  if (scramjet.route(event)) {
+    return scramjet.fetch(event);
+  }
+  if (uv.route(event)) {
+    return await uv.fetch(event);
+  }
+
+  return await fetch(event.request)
 }
 
 self.addEventListener('fetch', (event) => {
-    event.respondWith(handleRequest(event));
+  event.respondWith(handleRequest(event));
 });
