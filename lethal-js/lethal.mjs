@@ -1,109 +1,161 @@
-// Ultraviolet
+//////////////////////////////
+///          Init          ///
+//////////////////////////////
 await import('https://cdn.jsdelivr.net/npm/@titaniumnetwork-dev/ultraviolet/dist/uv.bundle.js');
-// UV Config
+
 await import('./uv.config.js');
-// Bare Mux
+
+await import("./scram/scramjet.shared.js")
+await import("./scram/scramjet.worker.js")
+await import("./scram/scramjet.controller.js")
+
 import * as BareMux from 'https://cdn.jsdelivr.net/npm/@mercuryworkshop/bare-mux/dist/index.mjs';
 
+
+//////////////////////////////
+///         Options        ///
+//////////////////////////////
 const connection = new BareMux.BareMuxConnection("/bareworker.js");
 
-let wispURL = null; // Not exported because it needs to be set through `setWisp`
-let transportURL = null; // Not exported because it needs to be set through `setTransport`
 
-// Service Worker for Ultraviolet
+let bareURL = null;
+let wispURL = null;
+let transportURL = null;
+let proxyOption = null; 
+
+const transportOptions = {
+  "epoxy": "https://cdn.jsdelivr.net/npm/@mercuryworkshop/epoxy-transport/dist/index.mjs",
+  "libcurl": "https://cdn.jsdelivr.net/npm/@mercuryworkshop/libcurl-transport/dist/index.mjs",
+  "bare": "https://cdn.jsdelivr.net/gh/Coding4Hours/bare-as-module3@dev/dist/index.mjs",
+}
+
+
+//////////////////////////////
+///           SW           ///
+//////////////////////////////
 const stockSW = "./ultraworker.js";
 const swAllowedHostnames = ["localhost", "127.0.0.1"];
+
 async function registerSW() {
-    if (!navigator.serviceWorker) {
-        if (
-            location.protocol !== "https:" &&
-            !swAllowedHostnames.includes(location.hostname)
-        )
-            throw new Error("Service workers cannot be registered without https.");
+  if (!navigator.serviceWorker) {
+    if (
+      location.protocol !== "https:" &&
+      !swAllowedHostnames.includes(location.hostname)
+    )
+      throw new Error("Service workers cannot be registered without https.");
 
-        throw new Error("Your browser doesn't support service workers.");
-    }
+    throw new Error("Your browser doesn't support service workers.");
+  }
 
-    await navigator.serviceWorker.register(stockSW);
+  await navigator.serviceWorker.register(stockSW);
 }
-await registerSW(); // Register the service worker
+
+const scramjet = new ScramjetController({
+  files: {
+    wasm: "/scram/scramjet.wasm.wasm",
+    worker: "/scram/scramjet.worker.js",
+    client: "/scram/scramjet.client.js",
+    shared: "/scram/scramjet.shared.js",
+    sync: "/scram/scramjet.sync.js",
+  },
+	flags: {
+	  serviceworkers: false,
+		syncxhr: false,
+		naiiveRewriter: false,
+		strictRewrites: true,
+		rewriterLogs: false,
+		captureErrors: true,
+		cleanErrors: true,
+		scramitize: false,
+		sourcemaps: true,
+	},
+});
+
+scramjet.init();
+
+await registerSW();
 console.log('lethal.js: Service Worker registered');
 
 
-/**
- * Convert and any search/url bar input into a formatted URL ready for use
- * @param {string} input - The inputed search terms, URl, or query
- * @param {string} template - The search engine prefix
- * @returns {string} - The proccessed output URL 
- */
-export function makeURL(input, template = 'https://www.google.com/search?q=%s') {
-    try {
-        return new URL(input).toString();
-    } catch (err) { }
+//////////////////////////////
+///        Functions       ///
+//////////////////////////////
+export function makeURL(input, template = 'https://search.brave.com/search?q=%s') {
+  try {
+    return new URL(input).toString();
+  } catch (err) { }
 
-    try {
-        const url = new URL(`http://${input}`);
-        if (url.hostname.includes(".")) return url.toString();
-    } catch (err) { }
+  const url = new URL(`http://${input}`);
+  if (url.hostname.includes(".")) return url.toString();
 
-    return template.replace("%s", encodeURIComponent(input));
+  return template.replace("%s", encodeURIComponent(input));
 }
 
 async function updateBareMux() {
-    if (transportURL != null && wispURL != null) {
-        console.log(`lethal.js: Setting BareMux to ${transportURL} and Wisp to ${wispURL}`);
-        await connection.setTransport(transportURL, [{ wisp: wispURL }]);
+  if(transportURL != "https://cdn.jsdelivr.net/gh/Coding4Hours/bare-as-module3@dev/dist/index.js") {
+  if (wispURL != null) {
+    console.log(`lethal.js: Setting BareMux to ${transportURL} and Wisp to ${wispURL}`);
+    await connection.setTransport(transportURL, [{ wisp: wispURL }]);
+  }
+  } else if(transportURL === "https://cdn.jsdelivr.net/gh/Coding4Hours/bare-as-module3@dev/dist/index.js") {
+    if (bareURL != null) {
+      console.log(`lethal.js: Setting BareMux to ${transportURL} and Bare to ${bareURL}]`);
+      await connection.settransport(transporturl, bareURL);
     }
+  }
 }
 
-// Transport options
-const transportOptions = {
-    "epoxy": "https://cdn.jsdelivr.net/npm/@mercuryworkshop/epoxy-transport/dist/index.mjs",
-    "libcurl": "https://cdn.jsdelivr.net/npm/@mercuryworkshop/libcurl-transport/dist/index.mjs"
-}
-/**
- * Select the transport method for the connection
- * @param {string} transport - The transport method to use (`'epoxy'`, `'libcurl'`, path to MJS or URL)
-*/
+
 export async function setTransport(transport) {
-    console.log(`lethal.js: Setting transport to ${transport}`);
-    // Epoxy or libcurl options
-    transportURL = transportOptions[transport];
-    if (!transportURL) {
-        transportURL = transport;
-    }
+  console.log(`lethal.js: Setting transport to ${transport}`);
+  transportURL = transportOptions[transport];
+  if (!transportURL) {
+    transportURL = transport;
+  }
 
-    await updateBareMux();
+  await updateBareMux();
 }
+
 export function getTransport() {
-    return transportURL;
+  return transportURL;
 }
 
-// Wisp options
-/**
- * 
- * @param {string} wisp - The WebSocket URL for the Wisp (eg. `'wss://your.wisp.server/wisp/'`)
- */
 export async function setWisp(wisp) {
-    console.log(`lethal.js: Setting Wisp to ${wisp}`);
-    wispURL = wisp;
+  console.log(`lethal.js: Setting Wisp to ${wisp}`);
+  wispURL = wisp;
 
-    await updateBareMux();
+  await updateBareMux();
 }
+
 export function getWisp() {
-    return wispURL;
+  return wispURL;
 }
 
-// Main Ultraviolet function
-/**
- * Get the Proxied URL for a given input
- * @param {string} input - The inputed search terms, URl, or query
- * @returns {string} - The proxied URL (viewable in an iframe)
- */
+export async function setBare(bare) {
+  console.log(`lethal.js: Setting Bare to ${bare}`);
+  bareURL = bare;
+
+  await updateBareMux();
+}
+
+export function getBare() {
+  return bareURL;
+}
+
+export function setProxy(proxy) {
+  console.log(`lethal.js: Setting proxy backend to {proxy}`);
+  proxyOption = proxy;
+}
+
+export function getProxy() {
+  return proxyOption;
+}
+
 export async function getProxied(input) {
-    let url = makeURL(input, 'https://www.google.com/search?q=%s');
+  const url = makeURL(input);
 
-    let viewUrl = __uv$config.prefix + __uv$config.encodeUrl(url);
+  if (proxyOption != "scram")
+    return __uv$config.prefix + __uv$config.encodeUrl(url);
 
-    return viewUrl;
+  else return scramjet.encodeUrl(url);
 }
