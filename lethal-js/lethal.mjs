@@ -1,15 +1,15 @@
 //////////////////////////////
 ///          Init          ///
 //////////////////////////////
-await import('https://cdn.jsdelivr.net/gh/Coding4Hours/cdn/uv/uv.bundle.js');
+await import('https://cdn.jsdelivr.net/gh/Bromine-Labs/cdn/uv/uv.bundle.js');
 
 await import('./uv.config.js');
 
-await import("https://cdn.jsdelivr.net/gh/Coding4Hours/cdn/scram/scramjet.shared.js")
-await import("https://cdn.jsdelivr.net/gh/Coding4Hours/cdn/scram/scramjet.worker.js")
-await import("https://cdn.jsdelivr.net/gh/Coding4Hours/cdn/scram/scramjet.controller.js")
+await import("https://cdn.jsdelivr.net/gh/Bromine-Labs/cdn/scram/scramjet.shared.js")
+await import("https://cdn.jsdelivr.net/gh/Bromine-Labs/cdn/scram/scramjet.worker.js")
+await import("https://cdn.jsdelivr.net/gh/Bromine-Labs/cdn/scram/scramjet.controller.js")
 
-import * as BareMux from 'https://cdn.jsdelivr.net/gh/Coding4Hours/cdn/bare-mux/index.mjs';
+import * as BareMux from 'https://cdn.jsdelivr.net/gh/Bromine-Labs/cdn/bare-mux/index.mjs';
 
 
 //////////////////////////////
@@ -26,7 +26,7 @@ let proxyOption = null;
 const transportOptions = {
   "epoxy": "https://cdn.jsdelivr.net/npm/@mercuryworkshop/epoxy-transport/dist/index.mjs",
   "libcurl": "https://cdn.jsdelivr.net/npm/@mercuryworkshop/libcurl-transport/dist/index.mjs",
-  "bare": "https://cdn.jsdelivr.net/gh/Coding4Hours/bare-as-module3@dev/dist/index.mjs",
+  "bare": "https://cdn.jsdelivr.net/gh/Bromine-Labs/bare-as-module3@dev/dist/index.mjs",
 }
 
 
@@ -52,11 +52,11 @@ async function registerSW() {
 
 const scramjet = new ScramjetController({
   files: {
-    wasm: "https://cdn.jsdelivr.net/gh/Coding4Hours/cdn/scram/scramjet.wasm.wasm",
-    worker: "https://cdn.jsdelivr.net/gh/Coding4Hours/cdn/scram/scramjet.worker.js",
-    client: "https://cdn.jsdelivr.net/gh/Coding4Hours/cdn/scram/scramjet.client.js",
-    shared: "https://cdn.jsdelivr.net/gh/Coding4Hours/cdn/scram/scramjet.shared.js",
-    sync: "https://cdn.jsdelivr.net/gh/Coding4Hours/cdn/scram/scramjet.sync.js",
+    wasm: "https://cdn.jsdelivr.net/gh/Bromine-Labs/cdn/scram/scramjet.wasm.wasm",
+    worker: "https://cdn.jsdelivr.net/gh/Bromine-Labs/cdn/scram/scramjet.worker.js",
+    client: "https://cdn.jsdelivr.net/gh/Bromine-Labs/cdn/scram/scramjet.client.js",
+    shared: "https://cdn.jsdelivr.net/gh/Bromine-Labs/cdn/scram/scramjet.shared.js",
+    sync: "https://cdn.jsdelivr.net/gh/Bromine-Labs/cdn/scram/scramjet.sync.js",
   },
 	flags: {
 	  serviceworkers: false,
@@ -92,12 +92,12 @@ export function makeURL(input, template = 'https://search.brave.com/search?q=%s'
 }
 
 async function updateBareMux() {
-  if(transportURL != "https://cdn.jsdelivr.net/gh/Coding4Hours/bare-as-module3@dev/dist/index.js") {
+  if(transportURL != "https://cdn.jsdelivr.net/gh/Bromine-Labs/bare-as-module3@dev/dist/index.js") {
   if (wispURL != null) {
     console.log(`lethal.js: Setting BareMux to ${transportURL} and Wisp to ${wispURL}`);
     await connection.setTransport(transportURL, [{ wisp: wispURL }]);
   }
-  } else if(transportURL === "https://cdn.jsdelivr.net/gh/Coding4Hours/bare-as-module3@dev/dist/index.js") {
+  } else if(transportURL === "https://cdn.jsdelivr.net/gh/Bromine-Labs/bare-as-module3@dev/dist/index.js") {
     if (bareURL != null) {
       console.log(`lethal.js: Setting BareMux to ${transportURL} and Bare to ${bareURL}]`);
       await connection.settransport(transporturl, bareURL);
