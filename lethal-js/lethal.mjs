@@ -50,7 +50,7 @@ export function makeURL(input, template = 'https://www.google.com/search?q=%s') 
 }
 
 async function updateBareMux() {
-    if (transportURL != null && wispURL != null) {
+    if (transportURL != null || wispURL != null) {
         console.log(`lethal.js: Setting BareMux to ${transportURL} and Wisp to ${wispURL}`);
         await connection.setTransport(transportURL, [{ wisp: wispURL }]);
     }
