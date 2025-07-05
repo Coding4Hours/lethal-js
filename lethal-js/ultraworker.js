@@ -1,41 +1,34 @@
-// Used as a wrapper for the Ultraviolet worker but with custom configuration for bundle
-/*global UVServiceWorker,__uv$config*/
-/*
- * Stock service worker script.
- * Users can provide their own sw.js if they need to extend the functionality of the service worker.
- * Ideally, this will be registered under the scope in uv.config.js so it will not need to be modified.
- * However, if a user changes the location of uv.bundle.js/uv.config.js or sw.js is not relative to them, they will need to modify this script locally.
- */
-importScripts('https://cdn.jsdelivr.net/gh/Bromine-Labs/cdn/uv/uv.bundle.js');
-importScripts('uv.config.js');
-importScripts(__uv$config.sw);
-importScripts("https://cdn.jsdelivr.net/gh/Bromine-Labs/cdn/scram/scramjet.shared.js", "https://cdn.jsdelivr.net/gh/Bromine-Labs/cdn/scram/scramjet.worker.js");
-// importScripts("/workerware/workerware.js")
+importScripts(
+  "https://unpkg.com/@titaniumnetwork-dev/ultraviolet@3.2.10/dist/uv.bundle.js",
+)
+importScripts("uv.config.js")
+importScripts(__uv$config.sw)
+importScripts("/scram/scramjet.shared.js", "/scram/scramjet.worker.js")
 
-const uv = new UVServiceWorker();
-const scramjet = new ScramjetServiceWorker();
+if (navigator.userAgent.includes("Firefox")) {
+  Object.defineProperty(globalThis, "crossOriginIsolated", {
+    value: true,
+    writable: true,
+  })
+}
 
-let playgroundData;
+const uv = new UVServiceWorker()
+const scramjet = new ScramjetServiceWorker()
 
-self.addEventListener('message', ({ data }) => {
-  if (data.type === 'playgroundData') {
-    playgroundData = data;
-  }
-});
+self.addEventListener("install", () => {
+  self.skipWaiting()
+})
 
 async function handleRequest(event) {
+  await scramjet.loadConfig()
 
-  await scramjet.loadConfig();
-  if (scramjet.route(event)) {
-    return scramjet.fetch(event);
-  }
-  if (uv.route(event)) {
-    return await uv.fetch(event);
-  }
+  if (scramjet.route(event)) return scramjet.fetch(event)
+
+  if (uv.route(event)) return await uv.fetch(event)
 
   return await fetch(event.request)
 }
 
-self.addEventListener('fetch', (event) => {
-  event.respondWith(handleRequest(event));
-});
+self.addEventListener("fetch", (event) => {
+  event.respondWith(handleRequest(event))
+})
